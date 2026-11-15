@@ -23,7 +23,19 @@ button.active{background:#f0b23d;color:#17130c;border-color:#f0b23d}
 @media (orientation:landscape) and (max-height:600px){body,.wrap{width:100vw;height:100dvh;min-height:100dvh;padding:0}.card-scene{width:100vw;height:100dvh;display:flex;align-items:center;justify-content:center}.card{width:100vw;height:auto;max-height:100dvh;aspect-ratio:928 / 444;border-radius:0}.face{border-radius:0}.face img{object-fit:contain;background:#111}}
 @media(min-width:600px){.card{aspect-ratio:928 / 444}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}}
-</style></head>
+</style>
+<style id="dynamic-motion">
+/* Idle motion: refined, subtle card breathing */
+.card-scene{animation:sceneFloat 5.8s ease-in-out infinite;will-change:transform}
+@keyframes sceneFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.card{transition:transform .85s cubic-bezier(.2,.75,.25,1),filter .5s ease}
+.card-scene.charging .card{filter:drop-shadow(0 0 10px rgba(255,181,71,.22))}
+.card-scene.charging .face.front img{filter:brightness(1.13) drop-shadow(0 0 14px rgba(255,181,71,.58));transition:filter .65s ease}
+.card-scene.charging{animation:chargeBreathe 2.2s ease-in-out infinite}
+@keyframes chargeBreathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.07)}}
+@media(prefers-reduced-motion:reduce){.card-scene,.card,.card-scene.charging{animation:none;transition:none}}
+</style>
+</head>
 <body><main class="wrap">
 <div class="card-scene" id="scene" role="button" tabindex="0" aria-label="名刺をタップして表裏を切り替える">
   <div class="card" id="card">
@@ -35,6 +47,10 @@ button.active{background:#f0b23d;color:#17130c;border-color:#f0b23d}
 <script>
 const card=document.getElementById('card'),scene=document.getElementById('scene');
 scene.addEventListener('click',()=>card.classList.toggle('flipped'));
+// Native Android app may update this through the JavaScript bridge.
+window.setChargingMode=(enabled)=>scene.classList.toggle('charging',!!enabled);
+// On supported browsers, gracefully use Battery Status API if available.
+if(navigator.getBattery){navigator.getBattery().then(b=>{window.setChargingMode(b.charging);b.addEventListener('chargingchange',()=>window.setChargingMode(b.charging));}).catch(()=>{});}
 // Prevent long-press selection, browser callout, and dragging on mobile.
 document.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('selectstart',e=>e.preventDefault());
